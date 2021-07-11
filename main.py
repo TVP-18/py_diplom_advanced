@@ -10,24 +10,20 @@ longpoll = VkLongPoll(vk.vk_group)
 
 
 def print_help():
-    help = """Пока я знаю только эти команды:
+    help = """
     1. поиск  
     Для начала поиска введите команду поиск и укажите id пользователя в VK через пробел. 
     Если id не указан, то поиск будет сделан для текущего пользователя.
     
     Например, поиск 15364645
     
-    2. помощь
-    Справка по работе с ботом.
     """
     return help
 
 
 def write_inform(user_id, users, start, step):
     for i, el in enumerate(users[start:start+step]):
-        vk.write_msg(user_id, f'{el["name"]} {el["link"]}')
-        if len(el['photo']) > 0:
-            vk.write_msg(user_id, attach=el['photo'])
+        vk.write_msg(user_id, f'{el["name"]} {el["link"]}', attach=f'{",".join(el["photo"])}')
 
     if start+step <= len(users):
         vk.write_msg(event.user_id, 'Продолжить?', keyboard=vk.create_button_YesNo())
