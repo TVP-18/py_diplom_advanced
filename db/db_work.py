@@ -23,7 +23,6 @@ class UsersVk(Base):
 
 
 def exists_user(user_id):
-    print(user_id)
     with Session() as session:
         result = session.query(UsersVk).filter(UsersVk.id == user_id)
 
