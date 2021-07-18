@@ -42,6 +42,11 @@ class Vk:
                 'is_closed': result[0].get('is_closed')}
         return user
 
+    def get_name(self, user_id):
+        result = self.vk_user.method('users.get', {'user_ids': user_id})
+        name = f'{result[0].get("first_name")} {result[0].get("last_name")}'
+        return name
+
     def get_city(self, value):
         if value == 0:
             return 0
