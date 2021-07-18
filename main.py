@@ -1,32 +1,52 @@
 from vk_api.longpoll import VkLongPoll, VkEventType
+import sqlalchemy as sq
+from sqlalchemy.orm import sessionmaker
 from pprint import pprint
 
-import settings
+from settings import TOKEN_GROUP, TOKEN_USER, DATABASE_URL
 from vk.vk import Vk
-
-vk = Vk(settings.TOKEN_USER, settings.TOKEN_GROUP)
-
-longpoll = VkLongPoll(vk.vk_group)
+from db.db_work import UsersVk, exists_user, add_user
 
 
-def print_help():
-    help = """
-    1. поиск  
-    Для начала поиска введите команду поиск и укажите id пользователя в VK через пробел. 
-    Если id не указан, то поиск будет сделан для текущего пользователя.
-    
-    Например, поиск 15364645
-    
-    """
-    return help
+HELP = """
+Для начала поиска введите команду 'поиск' и укажите id пользователя в VK через пробел.
+Если id не указан, то поиск будет сделан по данным вашего профиля.
+
+Например, поиск 15364645
+"""
 
 
-def write_inform(user_id, users, start, step):
+def command_help(vk, user_id):
+    hello = 'С возвращением' if exists_user(user_id) else 'Привет'
+    vk.write_msg(user_id, f"{hello}, {vk.get_name(user_id)} \n {HELP}")
+
+
+def command_hello(vk, user_id):
+    if not exists_user(user_id):
+        vk.write_msg(user_id, f"Привет, {vk.get_name(user_id)} \n {HELP}")
+
+
+def command_search(vk, user_use, user_search):
+    # запишем данные пользователя, который использует приложение в базу
+    if not exists_user(user_use):
+        user_vk = UsersVk(user_use)
+        add_user(user_vk)
+
+    # получаем данные из vk
+    param = vk.get_user(user_search)
+    users = vk.read_users(param)
+
+    # обрабатываем данные
+
+    return users
+
+
+def write_inform(vk, user_id, users, start, step):
     for i, el in enumerate(users[start:start+step]):
         vk.write_msg(user_id, f'{el["name"]} {el["link"]}', attach=f'{",".join(el["photo"])}')
 
     if start+step <= len(users):
-        vk.write_msg(event.user_id, 'Продолжить?', keyboard=vk.create_button_YesNo())
+        vk.write_msg(user_id, 'Продолжить?', keyboard=vk.create_button_YesNo())
 
     return start+step
 
@@ -37,8 +57,12 @@ def get_command(text):
     return command
 
 
-if __name__ == '__main__':
-    users = []
+def run_bot():
+    vk = Vk(TOKEN_USER, TOKEN_GROUP)
+
+    longpoll = VkLongPoll(vk.vk_group)
+
+    users = []  # список найденных пользователей
     current_start = 0
     current_step = 5
     for event in longpoll.listen():
@@ -47,29 +71,30 @@ if __name__ == '__main__':
             if event.to_me:
                 request = get_command(event.text)
 
-                if len(users) == 0: # поиск еще не проводился
-                    if request[0] == "привет":
-                        vk.write_msg(event.user_id, f"Привет, {event.user_id}")
-                    elif request[0] == "поиск":
-                        # определяем параметры поиска по профилю пользователя (текущего или указанного)
-                        if request[1] == '':
-                            param = vk.get_user(event.user_id)
-                        else:
-                            param = vk.get_user(request[1])
+                if len(users) == 0:  # поиск еще не проводился
+                    if request[0] == "поиск":
+                        user_search = event.user_id if request[1] == [] else request[1]
+                        users = command_search(vk, event.user_id, user_search)
 
-                        # запросить недостающие параметры для поиска!!!
-
-                        # ищем в VK
-                        users = vk.read_users(param)
+                        # выводим информацию
                         vk.write_msg(event.user_id, f'Найдено {len(users)}')
-
-                        current_start = write_inform(event.user_id, users, current_start, current_step)
+                        current_start = write_inform(vk, event.user_id, users, current_start, current_step)
                     else:
-                        vk.write_msg(event.user_id, print_help())
-                else: # поиск проводился, пользователь смотрит результаты
+                        command_help(vk, event.user_id)
+                else:  # поиск проводился, пользователь смотрит результаты
                     if request[0] == "да":
-                        current_start = write_inform(event.user_id, users, current_start, current_step)
+                        current_start = write_inform(vk, event.user_id, users, current_start, current_step)
+
+                        if current_start >= len(users):
+                            users = []
+                            current_ind = 0
+                            vk.write_msg(event.user_id, 'Поиск завершен')
+
                     elif request[0] == "нет":
                         users = []
                         current_ind = 0
-                        vk.write_msg(event.user_id, 'Результаты поиска очищены')
+                        vk.write_msg(event.user_id, 'Поиск завершен')
+
+
+if __name__ == '__main__':
+    run_bot()
