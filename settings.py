@@ -24,9 +24,9 @@ if exists_env != '':
     load_dotenv(exists_env)
 
 else:
-    create_key('Введите ключ доступа сообщества', 'TOKEN_GROUP')
-    create_key('Введите ключ доступа пользователя', 'TOKEN_USER')
-    create_key('Введите строку подключения к БД', 'DATABASE_URL')
+    create_key('Ключ доступа сообщества', 'TOKEN_GROUP')
+    create_key('Ключ доступа пользователя', 'TOKEN_USER')
+    create_key('Строка подключения к БД', 'DATABASE_URL')
 
 TOKEN_GROUP = os.getenv('TOKEN_GROUP')
 TOKEN_USER = os.getenv('TOKEN_USER')
