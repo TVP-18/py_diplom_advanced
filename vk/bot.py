@@ -90,8 +90,11 @@ class BotVk():
 
         if self.current_start[user_id] + self.current_step <= len(self.users[user_id]):
             self.vk.write_msg(user_id, 'Продолжить?', keyboard=self.vk.create_button_YesNo())
-
-        return self.current_start[user_id] + self.current_step
+            return self.current_start[user_id] + self.current_step
+        else:
+            self.reset_search(user_id)
+            self.vk.write_msg(user_id, 'Поиск завершен')
+            return 0
 
     def reset_search(self, user_id):
         self.users.pop(user_id)
