@@ -1,6 +1,6 @@
 import vk_api
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from pprint import pprint
+
 from datetime import date
 import datetime
 from random import randrange

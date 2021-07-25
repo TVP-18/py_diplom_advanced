@@ -1,6 +1,6 @@
 import sqlalchemy as sq
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.orm import sessionmaker
 
 from settings import DATABASE_URL
 
@@ -36,12 +36,5 @@ def add_user(user):
 
 
 if __name__ == '__main__':
-    # Base.metadata.create_all(engine)
-
-    # with Session() as session:
-    #     user = UsersVk(650124345)
-    #     session.add(user)
-    #     session.commit()
-
     print(exists_user(6))
 
